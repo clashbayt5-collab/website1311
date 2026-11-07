@@ -112,7 +112,49 @@ h1 em { font-style: normal; color: var(--accent); }
 .empty { padding: 40px 0; text-align: center; color: var(--muted); }
 footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
 
+/* сценарий звонка по нише */
+.me { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.me input { width: 180px; max-width: 100%; padding: 6px 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.script { margin-block: 16px 4px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.s-top { padding: 16px 18px 14px; display: grid; gap: 10px; background: var(--accent-soft); }
+.s-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+.s-head h2 { margin: 0; font: 600 19px/1.3 var(--f-display); text-wrap: balance; }
+.s-goal { font: 600 12px var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+.s-short { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; max-width: 95ch; }
+.s-short li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 10px; line-height: 1.45; }
+.s-short b { font: 600 12px/1.9 var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.ph { background: var(--warm-soft); color: var(--warm); border-radius: 4px; padding: 0 4px; font-weight: 600; }
+.s-rev { padding: 12px 18px; border-top: 1px solid var(--line); display: grid; gap: 8px; font-size: 14px; }
+.s-rev h3, .s-body h3 { margin: 0; font: 600 12px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.pains { display: flex; flex-wrap: wrap; gap: 6px; }
+.pain { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; background: var(--hot-soft); color: var(--hot); white-space: nowrap; }
+.pain.soft { background: var(--cold-soft); color: var(--ink); }
+.quote { margin: 0; padding: 6px 0 6px 12px; border-left: 3px solid var(--line); color: var(--muted); font-size: 13.5px; max-width: 90ch; }
+.quote b { color: var(--ink); font-weight: 600; }
+details.full > summary, details.prep > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; font-weight: 600; user-select: none; }
+details.full > summary::-webkit-details-marker, details.prep > summary::-webkit-details-marker { display: none; }
+details.full > summary::before, details.prep > summary::before { content: ""; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin-right: 2px; }
+details[open].full > summary::before, details[open].prep > summary::before { transform: rotate(45deg); }
+details.full { border-top: 1px solid var(--line); }
+details.full > summary { padding: 13px 18px; color: var(--accent); }
+.s-body { padding: 4px 18px 20px; display: grid; gap: 18px; max-width: 100ch; }
+.s-body section { display: grid; gap: 8px; }
+.s-body p { margin: 0; }
+.say { margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--bg); line-height: 1.55; }
+.say::before { content: "Вы: "; font-weight: 700; color: var(--accent); }
+.s-body ol, .s-body ul { margin: 0; padding-left: 20px; display: grid; gap: 5px; }
+.obj { display: grid; gap: 4px; padding: 10px 14px; border-radius: 8px; background: var(--bg); }
+.obj b { color: var(--hot); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.copybtn { justify-self: start; border: 1px solid var(--accent); color: var(--accent); background: transparent; border-radius: 7px; padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: 600; }
+details.prep { border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 2px; }
+details.prep > summary { color: var(--accent); font-size: 14px; }
+.prep-body { display: grid; gap: 10px; padding-top: 10px; font-size: 14px; max-width: 95ch; }
+.prep-body h4 { margin: 0; font: 600 11.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.msg { margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--bg); white-space: pre-wrap; font-size: 13.5px; }
+
 @media (max-width: 640px) {
+  .s-short li { grid-template-columns: 1fr; gap: 0; }
   .card { grid-template-columns: 1fr; }
   .c-side { grid-auto-flow: column; justify-content: space-between; justify-items: start; align-items: center; order: -1; }
   .score small { display: inline; margin-left: 4px; }
@@ -126,6 +168,11 @@ footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
     <div class="eyebrow">Норильск · Талнах · Кайеркан · 2ГИС + Яндекс.Карты</div>
     <h1>Компании <em>без сайта</em></h1>
     <div class="stats" id="stats"></div>
+    <div class="me">
+      <span>Для сценариев:</span>
+      <input id="meName" placeholder="Ваше имя" aria-label="Ваше имя">
+      <input id="meStudio" placeholder="Название вашей студии" aria-label="Название студии">
+    </div>
   </header>
   <nav class="niches" id="niches" aria-label="Ниши"></nav>
 </div>
@@ -154,7 +201,7 @@ footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
 </div>
 
 <main class="wrap">
-  <section class="pitch" id="pitch" hidden><h2 id="pitchTitle"></h2><p id="pitchText"></p></section>
+  <section class="script" id="script"></section>
   <div class="list" id="list"></div>
 </main>
 <footer class="wrap" id="foot"></footer>
@@ -205,7 +252,114 @@ footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
     location.hash = n ? SLUG[n] : '';
     if (!n) setNiche('');
   });
-  function setNiche(n) { state.niche = n; state.shown = PAGE; renderNiches(); render(); }
+  function setNiche(n) { state.niche = n; state.shown = PAGE; renderNiches(); renderScript(); render(); }
+
+  // ---------- сценарии звонков ----------
+  const S = D.scripts, C = S.common;
+  const PAIN = {
+    call:  ['Не дозвониться',        'онлайн-запись и заявка 24/7 снимут нагрузку с телефона'],
+    price: ['Вопросы к ценам',       'прайс на сайте: клиент знает цену до визита'],
+    book:  ['Запись и ожидание',     'онлайн-запись с выбором свободного времени'],
+    info:  ['График и как найти',    'график, схема проезда и фото входа на сайте'],
+    menu:  ['Меню и наличие',        'актуальный каталог или меню с наличием'],
+    deliv: ['Доставка и заказы',     'онлайн-заказ со временем доставки и статусом'],
+    photo: ['Ожидание и результат',  'портфолио реальных работ, чтобы ожидания совпадали']
+  };
+  const me = { name: '', studio: '' };
+  try { me.name = localStorage.getItem('meName') || ''; me.studio = localStorage.getItem('meStudio') || ''; } catch (e) {}
+  $('meName').value = me.name; $('meStudio').value = me.studio;
+  ['meName', 'meStudio'].forEach(id => $(id).addEventListener('input', e => {
+    me[id === 'meName' ? 'name' : 'studio'] = e.target.value.trim();
+    try { localStorage.setItem(id, e.target.value.trim()); } catch (err) {}
+    renderScript(); render();
+  }));
+  const shortName = n => (n || '').split(',')[0].trim();
+  // подставляет данные; html=true — подсвечивает незаполненное
+  function fill(t, r, niche, html) {
+    const ns = S.niches[niche] || {};
+    const soc = r ? Object.keys(r.linkmap || {}).filter(k => !/номер|2ГИС|Яндекс/.test(k)).slice(0, 3).join(', ') : '';
+    const v = {
+      name: r ? shortName(r.name) : '', reviews: r && r.reviews ? r.reviews : '', rating: r && r.rating ? Number(r.rating).toFixed(1) : '',
+      social: soc || (r ? 'телефон' : ''), manager: me.name, studio: me.studio,
+      niche_lc: (niche || 'вашей сферы').toLowerCase(), payback: ns.payback || 'нескольких клиентов', query: ns.query || 'услуги'
+    };
+    const label = { name: 'название', reviews: 'N', rating: 'рейтинг', social: 'соцсети', manager: 'ваше имя', studio: 'студия' };
+    let s = html ? esc(t) : t;
+    s = s.replace(/\{(\w+)\}/g, (m, k) => v[k] !== undefined && v[k] !== '' ? (html ? esc(v[k]) : v[k])
+      : (html ? `<span class="ph">${label[k] || k}</span>` : `[${label[k] || k}]`));
+    if (html) s = s.replace(/\[([^\]]+)\]/g, '<span class="ph">$1</span>');
+    return s;
+  }
+  // боли из отзывов по нише
+  function nichePains(niche) {
+    const sub = leads.filter(r => (!niche || r.niche === niche) && r.rv);
+    const agg = {}; let bad = 0, total = 0; const used = new Set();
+    sub.sort((a, b) => (b.reviews || 0) - (a.reviews || 0)).forEach(r => { total += r.rv.n || 0; bad += r.rv.bad || 0;
+      Object.entries(r.rv.p || {}).forEach(([c, x]) => { (agg[c] = agg[c] || { firms: 0, neg: 0, q: [] }); agg[c].firms++; agg[c].neg += x[1];
+        const nm = shortName(r.name);
+        if (x[3] && x[3].length > 12 && !used.has(nm) && agg[c].q.length < 1) { agg[c].q.push([nm, x[3]]); used.add(nm); } }); });
+    return { sub: sub.length, total, bad, agg: Object.entries(agg).sort((a, b) => b[1].firms - a[1].firms) };
+  }
+  function renderScript() {
+    const n = state.niche, ns = S.niches[n];
+    if (!ns) {
+      $('script').innerHTML = `<div class="s-top"><div class="s-head"><h2>Сценарии звонков</h2></div>
+        <p style="margin:0">Выберите нишу выше: откроется короткий сценарий звонка, разбор отзывов и полный сценарий по стрелке. В карточке каждой компании есть «Подготовка к звонку» с персональным заходом.</p></div>`;
+      return;
+    }
+    const np = nichePains(n);
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const li = (lbl, t) => `<li><b>${lbl}</b><span>${fill(cap(t.replace(/^[^:]+:\s*/, '')), null, n, true)}</span></li>`;
+    const labels = ['Заход', 'Боль', 'Предлагаем', 'Аргумент', 'Цель'];
+    const revHtml = np.agg.length ? `<div class="s-rev"><h3>Что пишут клиенты в отзывах · ${np.sub} компаний, ${np.total} отзывов</h3>
+        <div class="pains">${np.agg.slice(0, 5).map(([c, a]) => `<span class="pain${a.neg ? '' : ' soft'}">${PAIN[c][0]} · ${a.firms} комп.</span>`).join('')}</div>
+        ${np.agg.filter(([c, a]) => a.q.length).slice(0, 3).map(([c, a]) => `<p class="quote"><b>${esc(a.q[0][0])}:</b> «${esc(a.q[0][1])}» → <b>${PAIN[c][1]}</b></p>`).join('')}</div>` : '';
+    const objs = ns.objections.concat(C.objections);
+    $('script').innerHTML = `
+      <div class="s-top">
+        <div class="s-head"><h2>Сценарий звонка: ${esc(n.toLowerCase())}</h2><span class="s-goal">Цель: ${esc(ns.goal)}</span></div>
+        <ul class="s-short">${ns.short.map((t, k) => li(labels[k] || '', t)).join('')}</ul>
+      </div>
+      ${revHtml}
+      <details class="full" id="fullScript"><summary>Полный сценарий разговора с клиентом</summary>
+        <div class="s-body">
+          <section><h3>1. Начало звонка</h3><p class="say">${fill(C.opening, null, n, true)}</p></section>
+          <section><h3>Если отвечает администратор</h3>${C.gatekeeper.map(([q, a]) => `<div class="obj"><b>${esc(q)}</b><span>${fill(a, null, n, true)}</span></div>`).join('')}</section>
+          <section><h3>2. Разрешение на разговор</h3><p class="say">${fill(C.permission, null, n, true)}</p></section>
+          <section><h3>3. Заход: почему звоним именно им</h3><p class="say">${fill(ns.hook, null, n, true)}</p>
+            <p style="color:var(--muted);font-size:13.5px">Если в карточке компании есть жалобы из отзывов, добавьте одну: «Я заметил, что в отзывах пишут… — это как раз решается сайтом».</p></section>
+          <section><h3>4. Вопросы: узнать ситуацию</h3><ol>${ns.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ol></section>
+          <div class="cols">
+            <section><h3>Что болит у клиентов этой ниши</h3><ul>${ns.pains.map(p => `<li>${esc(p)}</li>`).join('')}</ul></section>
+            <section><h3>Что предложить на сайте</h3><ul>${ns.features.map(p => `<li>${esc(p)}</li>`).join('')}</ul></section>
+          </div>
+          <section><h3>5. Предложение</h3><p class="say">${fill(ns.offer, null, n, true)}</p></section>
+          <section><h3>6. Возражения</h3>${objs.map(([q, a]) => `<div class="obj"><b>${esc(q)}</b><span>${fill(a, null, n, true)}</span></div>`).join('')}</section>
+          <section><h3>7. Закрытие: договориться о следующем шаге</h3><p class="say">${fill(C.close, null, n, true)}</p></section>
+          <section><h3>8. Сообщение после звонка (WhatsApp / Telegram)</h3><p class="msg">${fill(ns.followup, null, n, true)}</p></section>
+          <section><h3>После звонка</h3><ul>${C.after.map(p => `<li>${esc(p)}</li>`).join('')}</ul></section>
+        </div>
+      </details>`;
+  }
+  // персональная подготовка в карточке
+  function prep(r) {
+    const ns = S.niches[r.niche]; if (!ns) return '';
+    const rv = r.rv;
+    const pains = rv && rv.p ? Object.entries(rv.p).sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0]) : [];
+    const painHtml = pains.length ? `<h4>Жалобы в отзывах → аргумент для сайта</h4>
+      <div class="pains">${pains.map(([c, x]) => `<span class="pain${x[1] ? '' : ' soft'}">${PAIN[c][0]} · ${x[0]}</span>`).join('')}</div>
+      ${pains.slice(0, 2).map(([c, x]) => `<p class="quote">${x[2] <= 3 ? `<b>${x[2]}★</b> ` : ''}«${esc(x[3])}» → <b>${PAIN[c][1]}</b></p>`).join('')}` : '';
+    const negHtml = rv && rv.neg && rv.neg.length && !pains.some(([c, x]) => x[2] <= 3)
+      ? `<h4>Негативный отзыв</h4><p class="quote"><b>${rv.neg[0][0]}★</b> «${esc(rv.neg[0][1])}»</p>` : '';
+    const revLine = rv ? `<p style="margin:0;color:var(--muted)">Яндекс: ${rv.n} текстовых отзывов${rv.bad ? `, из них ${rv.bad} с оценкой 1–3` : ', негатива нет'}.</p>` : '';
+    const msg = fill(ns.followup, r, r.niche, false);
+    return `<details class="prep"><summary>Подготовка к звонку</summary><div class="prep-body">
+      <h4>Заход</h4><p class="say">${fill(ns.hook, r, r.niche, true)}</p>
+      ${revLine}${painHtml}${negHtml}
+      <h4>Сообщение после звонка</h4><p class="msg">${esc(msg)}</p>
+      <button type="button" class="copybtn" data-copy="${esc(msg)}">Копировать сообщение</button>
+    </div></details>`;
+  }
   function fromHash() { const n = BY_SLUG[location.hash.slice(1)] || ''; setNiche(n); }
   window.addEventListener('hashchange', fromHash);
 
@@ -243,6 +397,7 @@ footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
         ${r.email ? `<div class="c-line"><span>${esc(r.email)}</span></div>` : ''}
         <div class="links">${maps}${soc}</div>
         ${r.why ? `<div class="why">${esc(r.why)}</div>` : ''}
+        ${prep(r)}
       </div>
       <div class="c-side">
         <div class="score">${r.score}<small>балл</small></div>
@@ -261,9 +416,6 @@ footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
     });
     const r = state.prio ? base.filter(x => x.p === state.prio) : base;
     $('count').textContent = `${r.length} из ${state.niche ? leads.filter(x => x.niche === state.niche).length : leads.length}`;
-    const pitch = state.niche && D.pitch[state.niche];
-    $('pitch').hidden = !pitch;
-    if (pitch) { $('pitchTitle').textContent = 'Что предложить: ' + state.niche.toLowerCase(); $('pitchText').textContent = pitch; }
     $('list').innerHTML = r.length
       ? r.slice(0, state.shown).map((x, k, arr) => {
           const head = state.sort === 'score' && !state.prio && (k === 0 || arr[k - 1].p !== x.p)
@@ -278,8 +430,9 @@ footer { padding-block: 10px 30px; color: var(--muted); font-size: 13px; }
     const c = e.target.closest('[data-copy]');
     if (c) {
       const t = c.dataset.copy;
-      const ok = () => { c.textContent = 'скопировано'; setTimeout(() => c.textContent = 'копировать', 1400); };
-      try { navigator.clipboard.writeText(t).then(ok, () => selectText(c.parentNode)); } catch (err) { selectText(c.parentNode); }
+      const was = c.textContent, el = c.previousElementSibling || c.parentNode;
+      const ok = () => { c.textContent = 'Скопировано'; setTimeout(() => c.textContent = was, 1400); };
+      try { navigator.clipboard.writeText(t).then(ok, () => selectText(el)); } catch (err) { selectText(el); }
       return;
     }
     if (e.target.id === 'more') { state.shown += PAGE; render(); }
