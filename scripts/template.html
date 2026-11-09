@@ -364,6 +364,7 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
       <p class="goal">${esc(st.goal)}</p>
       ${st.say ? `<p class="say">${fill(st.say, null, n, true)}</p>` : ''}
       ${st.branches ? st.branches.map(([q, a]) => `<div class="obj"><b>${esc(q)}</b><span>${fill(a, null, n, true)}</span></div>`).join('') : ''}
+      ${st.pitch ? `<h4>Когда вышли на главного</h4><p class="say">${fill(st.pitch, null, n, true)}</p>` : ''}
       ${extra || ''}
       ${st.tips ? `<ul class="tips">${st.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </section>`;
@@ -384,6 +385,7 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     const revHtml = np.agg.length ? `<div class="s-rev"><h3>Что пишут клиенты в отзывах · ${np.sub} компаний, ${np.total} отзывов</h3>
         <div class="pains">${np.agg.slice(0, 5).map(([c, a]) => `<span class="pain">${PAIN[c][0]} · ${a.firms} комп.</span>`).join('')}</div>${quotes}</div>` : '';
     const extra = {
+      lpr: `<h4>Проблемы без сайта → что решает сайт</h4><div class="react">${(ns.nosite || []).map(([a, b]) => `<div><span>${esc(a)}</span><span>→ ${esc(b)}</span></div>`).join('')}</div>`,
       problems: `<h4>Вопросы для этой ниши</h4><ol>${ns.questions.map(q => `<li>${esc(q)}</li>`).join('')}</ol>`,
       reviews: quotes ? `<h4>Примеры жалоб в нише</h4>${quotes}` : '',
       listen: `<h4>Если говорит → что вписать в предложение</h4><div class="react">${ns.reactions.map(([a, b]) => `<div><span>${esc(a)}</span><span>→ ${esc(b)}</span></div>`).join('')}</div>`,
@@ -406,6 +408,24 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
       </details>`;
     initCalcs($('script'));
   }
+  // проблемы конкретной компании из-за отсутствия сайта
+  const SOC = ['VK', 'Telegram', 'Instagram', 'WhatsApp', 'MAX', 'OK', 'Viber', 'YouTube', 'TikTok', 'Дзен', 'RuTube', 'Facebook'];
+  function companyNoSite(r) {
+    const keys = Object.keys(r.linkmap || {}).filter(k => !/номер/.test(k));
+    const soc = keys.filter(k => SOC.includes(k) && k !== 'WhatsApp');
+    const has = re => keys.filter(k => re.test(k));
+    const out = [];
+    if (!keys.length) out.push(['В интернете о вас — только карточка на картах: ни цен, ни фото работ, ни записи', 'сайт, где всё это есть и который находится в Яндексе']);
+    if (soc.length) out.push([`Ведёте ${soc.join(', ')}, но туда приходят те, кто вас уже знает — из поиска Яндекса соцсети новых клиентов почти не приводят`, 'сайт для новых клиентов, ссылки на соцсети остаются']);
+    const book = has(/DIKIDI|YCLIENTS|Sonline|Arnica|EasyWeek|Beautybox/);
+    if (book.length) out.push([`Запись через ${book.join(', ')}: клиент попадает на чужую витрину, где рядом конкуренты`, 'своя онлайн-запись на своём сайте']);
+    const agg = has(/Яндекс Еда|Delivery|Flowwow|Chibbis|Booking|Суточно|Ostrovok|101Hotels|Твил|Профи|Яндекс Услуги|Zoon/);
+    if (agg.length) out.push([`Заказы и брони через ${agg.join(', ')} — с каждого уходит комиссия`, 'прямые заказы на своём сайте без комиссии']);
+    if (has(/Avito/).length) out.push(['Объявления на Avito теряются среди сотен конкурентов', 'своя витрина с ценами и отзывами']);
+    if (has(/Taplink|Hipolink|Linktree|mssg|Tapy|bio\.link|wbiz|msg\.link/).length) out.push(['Taplink — это страница со ссылками, а не сайт: в поиске Яндекса её почти не видно', 'полноценный сайт, который находится по вашим услугам']);
+    if (has(/QR-меню/).length) out.push(['QR-меню видно только в зале — из поиска и с улицы его не найти', 'меню на сайте, которое видно до визита']);
+    return out;
+  }
   // ---------- подготовка к звонку в карточке ----------
   function prep(r) {
     const ns = S.niches[r.niche]; if (!ns) return '';
@@ -413,7 +433,12 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     const pains = rv && rv.p ? Object.entries(rv.p).sort((a, b) => b[1][1] - a[1][1] || b[1][0] - a[1][0]) : [];
     const qs = pains.filter(([c, x]) => x[3]).map(([c, x]) => ({ t: x[3], r: x[2], fix: PAIN[c][1] }));
     if (rv && rv.neg && rv.neg[0] && !qs.some(q => q.t === rv.neg[0][1])) qs.push({ t: rv.neg[0][1], r: rv.neg[0][0], fix: '' });
-    const intro = C.steps[0].say, revSay = C.steps[3].say;
+    const intro = C.steps[0].say, revSay = C.steps[3].say, lprStep = C.steps.find(x => x.id === 'lpr');
+    const probs = companyNoSite(r).concat(ns.nosite || []).slice(0, 4);
+    const ord = ['во-первых', 'во-вторых', 'в-третьих'];
+    const probText = probs.slice(0, 3).map((x, k) => `${ord[k]}, ${x[0].charAt(0).toLowerCase() + x[0].slice(1)}`).join('; ');
+    const lprSay = fill(lprStep.pitch, r, r.niche, true).replace('<span class="ph">назвать 2–3 проблемы из списка ниже</span>', esc(probText));
+    const lprHtml = `<p class="say">${lprSay}</p><div class="react">${probs.map(([a, b]) => `<div><span>${esc(a)}</span><span>→ ${esc(b)}</span></div>`).join('')}</div>`;
     let revBlock;
     if (qs.length) {
       const say = fill(revSay, r, r.niche, true).replace('<span class="ph">цитата из отзыва</span>', esc(qs[0].t));
@@ -427,6 +452,7 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     const msg = fill(ns.followup, r, r.niche, false);
     return `<details class="prep"><summary>Подготовка к звонку</summary><div class="prep-body">
       <h4>1. Представляемся</h4><p class="say">${fill(intro, r, r.niche, true)}</p>
+      <h4>2. На главном: что компания теряет без сайта</h4>${lprHtml}
       <h4>4. Отзывы, которые подчеркнуть</h4>${revLine}${revBlock}
       <h4>7–8. Расчёт потерь и итоговая сумма</h4>${calcHtml(r.niche, shortName(r.name))}
       <h4>Сообщение после звонка</h4><p class="msg">${esc(msg)}</p>
