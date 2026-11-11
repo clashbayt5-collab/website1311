@@ -247,7 +247,7 @@ if len(sys.argv) > 3:
     keep = ["prio", "score", "niche", "name", "cats", "addr", "district", "phones", "email", "linkmap", "rating",
             "reviews", "branches", "srcs", "why", "link2gis", "linkya", "queries"]
     out = [{k: r.get(k) for k in keep} for r in rows]
-    json.dump({"leads": out, "pitch": PITCH, "order": NICHE_ORDER, "checked": len(groups)},
+    json.dump({"leads": out, "pitch": PITCH, "order": NICHE_ORDER, "checked": len(groups), "site_by_niche": Counter(r["niche"] for r in with_site)},
               open(sys.argv[3], "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 print("groups", len(groups), "no-site leads", len(rows), "with site", len(with_site))
 print(Counter(r["prio"] for r in rows))

@@ -12,6 +12,19 @@ for i, r in enumerate(d["leads"]):
     r["cats"] = (r.get("cats") or "")[:160]
     if str(i) in rev:
         r["rv"] = rev[str(i)]
+# новые компании: «скоро открытие» в 2ГИС или свежая карточка с небольшим числом отзывов
+new_path = os.path.join(os.path.dirname(leads_path), "new.json")
+# самые свежие 10% карточек 2ГИС (номер карточки растёт со временем)
+g_path = os.path.join(os.path.dirname(leads_path), "2gis.json")
+ids = sorted(int(i) for i in json.load(open(g_path, encoding="utf-8"))["firms"] if i.startswith("7000000")) if os.path.exists(g_path) else []
+FRESH_ID = ids[int(len(ids) * 0.9)] if ids else 0
+if os.path.exists(new_path):
+    for k, v in json.load(open(new_path, encoding="utf-8")).items():
+        r = d["leads"][int(k)]
+        if v.get("opening"):
+            r["nw"] = {"opening": v.get("opening")}
+        elif not v.get("tc") and int(v["id"]) >= FRESH_ID and (v.get("reviews") or 0) <= 20 and (r.get("reviews") or 0) <= 20:
+            r["nw"] = {}
 d["scripts"] = json.load(open(scripts_path, encoding="utf-8"))
 s = json.dumps(d, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 t = open(tpl_path, encoding="utf-8").read().replace("__DATA__", s)

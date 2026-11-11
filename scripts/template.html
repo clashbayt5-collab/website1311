@@ -172,6 +172,19 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
 .calc-nums span:nth-child(n+3) b { color: var(--done); }
 .calc-out { display: grid; gap: 8px; }
 
+.niche.special { border-style: dashed; }
+.niche.special.hot .n-name { color: var(--hot); }
+.niche.special.new .n-name { color: var(--accent); }
+.niche.special[aria-pressed="true"] .n-name { color: var(--surface); }
+.niche.special.hot[aria-pressed="true"] { background: var(--hot); border-color: var(--hot); }
+.pill.new { background: var(--accent-soft); color: var(--accent); }
+.pill.hotp { background: var(--hot); color: var(--surface); }
+.sig { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; }
+.sig span { padding: 2px 8px; border-radius: 999px; background: var(--hot-soft); color: var(--hot); }
+details.noes { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; }
+details.noes > summary { cursor: pointer; font-weight: 600; color: var(--hot); font-size: 14px; }
+.noes-body { display: grid; gap: 6px; padding-top: 8px; }
+
 @media (max-width: 640px) {
   .s-short li { grid-template-columns: 1fr; gap: 0; }
   .react div { grid-template-columns: 1fr; gap: 2px; }
@@ -233,7 +246,7 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
   const D = JSON.parse(document.getElementById('data').textContent);
   const SLUG = {"Цветы":"flowers","Автосервис":"auto","Стоматология":"dental","Салоны красоты":"beauty","Доставка и еда":"food",
     "Ремонт и стройка":"repair","Бытовые услуги":"services","Медицина и здоровье":"medical","Обучение и дети":"kids",
-    "Праздники и фото":"events","Гостиницы и досуг":"leisure","Деловые услуги":"business"};
+    "Праздники и фото":"events","Гостиницы и досуг":"leisure","Деловые услуги":"business","__hot":"hot","__new":"new"};
   const BY_SLUG = Object.fromEntries(Object.entries(SLUG).map(([k, v]) => [v, k]));
   const leads = D.leads.map((r, i) => ({ ...r, i, p: (r.prio || 'C')[0],
     hay: [r.name, r.addr, r.cats, r.phones, r.district].join(' ').toLowerCase() }));
@@ -258,8 +271,14 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
 
   // плитки ниш
   function renderNiches() {
-    const all = [''].concat(D.order.filter(n => leads.some(r => r.niche === n)));
+    const all = ['', '__hot', '__new'].concat(D.order.filter(n => leads.some(r => r.niche === n)));
     $('niches').innerHTML = all.map(n => {
+      if (SPECIAL[n]) {
+        const sub = SPECIAL[n].list();
+        const meta = n === '__hot' ? `${sub.length} шт. · звонить первыми` : `${sub.length} шт. · ${sub.filter(r => r.nw.opening).length} скоро откроются`;
+        return `<button class="niche special ${n.slice(2)}" data-n="${n}" aria-pressed="${state.niche === n}">
+          <span class="n-name">${SPECIAL[n].name}</span><span class="n-meta"><span>${meta}</span></span></button>`;
+      }
       const sub = n ? leads.filter(r => r.niche === n) : leads;
       const hot = sub.filter(r => r.p === 'A').length;
       return `<button class="niche" data-n="${esc(n)}" aria-pressed="${state.niche === n}">
@@ -286,6 +305,37 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     deliv: ['Доставка и заказы',     'онлайн-заказ со временем доставки и статусом'],
     photo: ['Ожидание и результат',  'портфолио реальных работ, чтобы ожидания совпадали']
   };
+  // ---------- готовность купить и новые компании ----------
+  const SOC_K = ['VK', 'Telegram', 'Instagram', 'MAX', 'OK', 'Viber', 'YouTube', 'TikTok', 'Дзен', 'RuTube', 'Facebook'];
+  const PAY_K = /Яндекс Еда|Delivery|Flowwow|Chibbis|Booking|Суточно|Ostrovok|101Hotels|Твил|Профи|Яндекс Услуги|DIKIDI|YCLIENTS|Sonline|Arnica|EasyWeek|Beautybox/;
+  const fmtDate = d => (d || '').split('-').reverse().join('.');
+  const nicheCount = {}; leads.forEach(r => nicheCount[r.niche] = (nicheCount[r.niche] || 0) + 1);
+  const share = n => { const s = (D.site_by_niche || {})[n] || 0; return Math.round(100 * s / ((s + (nicheCount[n] || 0)) || 1)); };
+  const HOT_MIN = 8;
+  leads.forEach(r => {
+    const sig = []; let rs = 0;
+    const keys = Object.keys(r.linkmap || {}), rv = r.reviews || 0;
+    if (rv >= 300) { rs += 3; sig.push(`большой поток: ${rv} отзывов`); }
+    else if (rv >= 100) { rs += 2; sig.push(`активный спрос: ${rv} отзывов`); }
+    else if (rv >= 40) { rs += 1; sig.push(`${rv} отзывов`); }
+    if ((r.rating || 0) >= 4.7 && rv >= 20) { rs += 1; sig.push(`рейтинг ${Number(r.rating).toFixed(1)}`); }
+    if ((r.branches || 1) > 1) { rs += 2; sig.push(`${r.branches} точки — растут`); }
+    const soc = keys.filter(k => SOC_K.includes(k)), pay = keys.filter(k => PAY_K.test(k));
+    const land = keys.filter(k => /Taplink|Hipolink|Linktree|mssg|QR-меню/.test(k));
+    if (soc.length >= 2 || land.length) { rs += 2; sig.push(`уже вкладываются в маркетинг: ${soc.concat(land).join(', ')}`); }
+    else if (soc.length) { rs += 1; sig.push(`ведут ${soc[0]}`); }
+    if (pay.length) { rs += 2; sig.push(`платят площадкам: ${pay.join(', ')}`); }
+    const pains = r.rv && r.rv.p ? Object.keys(r.rv.p) : [];
+    if (pains.length) { rs += 2; sig.push(`жалобы в отзывах: ${pains.map(c => PAIN[c][0].toLowerCase()).join(', ')}`); }
+    const sh = share(r.niche); if (sh >= 30) { rs += 1; sig.push(`${sh}% конкурентов в нише уже с сайтом`); }
+    if (r.nw) { rs += 2; sig.push(r.nw.opening ? `открывается ${fmtDate(r.nw.opening)}` : 'новая компания'); }
+    r.rs = rs; r.sig = sig; r.hot = rs >= HOT_MIN && !!r.phones;
+  });
+  const SPECIAL = {
+    __hot: { name: 'Готовы сейчас', list: () => leads.filter(r => r.hot) },
+    __new: { name: 'Новые компании', list: () => leads.filter(r => r.nw) }
+  };
+  const inView = (x, n) => !n || (n === '__hot' ? x.hot : n === '__new' ? !!x.nw : x.niche === n);
   const me = { name: '', studio: '', price: '' };
   const ME = { meName: 'name', meStudio: 'studio', mePrice: 'price' };
   try { for (const id in ME) me[ME[id]] = localStorage.getItem(id) || ''; } catch (e) {}
@@ -359,18 +409,54 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
   const initCalcs = root => root.querySelectorAll('.calc').forEach(calcUpdate);
 
   // ---------- сценарий по нише ----------
+  const noesHtml = (list, n, r, open) => list && list.length ? `<details class="noes"${open ? ' open' : ''}><summary>Если отвечает «нет» · ${list.length}</summary><div class="noes-body">${list.map(([q, a]) => `<div class="obj"><b>${esc(q)}</b><span>${fill(a, r, n, true)}</span></div>`).join('')}</div></details>` : '';
   function stepHtml(st, k, n, extra) {
     return `<section class="step"><h3><span class="num">${k + 1}</span>${esc(st.title)}</h3>
       <p class="goal">${esc(st.goal)}</p>
       ${st.say ? `<p class="say">${fill(st.say, null, n, true)}</p>` : ''}
+      ${st.id === 'intro' ? noesHtml(st.noes, n, null, true) : ''}
       ${st.branches ? st.branches.map(([q, a]) => `<div class="obj"><b>${esc(q)}</b><span>${fill(a, null, n, true)}</span></div>`).join('') : ''}
       ${st.pitch ? `<h4>Когда вышли на главного</h4><p class="say">${fill(st.pitch, null, n, true)}</p>` : ''}
       ${extra || ''}
+      ${st.id !== 'intro' ? noesHtml(st.noes, n, null, false) : ''}
       ${st.tips ? `<ul class="tips">${st.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
     </section>`;
   }
+  function specialPanel(n) {
+    const li = (a, b) => `<li><b>${a}</b><span>${b}</span></li>`;
+    if (n === '__hot') {
+      return `<div class="s-top"><div class="s-head"><h2>Готовы сейчас: звонить первыми</h2><span class="s-goal">${SPECIAL[n].list().length} компаний</span></div>
+        <ul class="s-short">
+          ${li('Кто здесь', 'Компании, у которых одновременно есть нужда в сайте и признаки готовности платить: большой поток клиентов, филиалы, деньги уже уходят на соцсети, DIKIDI/YCLIENTS или агрегаторы, есть жалобы в отзывах.')}
+          ${li('Подход', 'Короткое вступление и сразу к деньгам: «Вы уже платите [площадке] и ведёте соцсети — а своего сайта, куда это всё ведёт, нет».')}
+          ${li('Что говорить', 'Сценарий — по нише компании (кнопка ниши выше). В карточке: «Почему сейчас» и «Подготовка к звонку» с её отзывами и расчётом.')}
+          ${li('Срочность', 'Им сайт нужен сегодня: каждый месяц без него — потерянные клиенты и комиссии. Предлагайте запуск за [срок] и оплату частями.')}
+        </ul></div>
+        <details class="full"><summary>Как выбраны компании</summary><div class="s-body"><section>
+          <p>Методика «нужда × готовность купить» из англоязычной практики продаж локальному бизнесу (NotiQ, 2026): просто «нет сайта» — это нужда, а готовность видна по активности бизнеса. Баллы:</p>
+          <ul><li>300+ отзывов — 3, 100+ — 2, 40+ — 1 (живой спрос)</li><li>рейтинг 4.7+ — 1</li><li>несколько точек — 2 (бизнес растёт)</li>
+          <li>2+ соцсети, Taplink или QR-меню — 2 (уже вкладываются в маркетинг)</li><li>DIKIDI, YCLIENTS, агрегаторы, Суточно, Flowwow — 2 (платят площадкам)</li>
+          <li>жалобы в отзывах на цены, запись, дозвон и т. п. — 2</li><li>30%+ конкурентов в нише с сайтом — 1</li><li>новая компания — 2</li></ul>
+          <p>В «Готовы сейчас» — компании с ${HOT_MIN}+ баллами и телефоном.</p></section></div></details>`;
+    }
+    return `<div class="s-top"><div class="s-head"><h2>Новые компании</h2><span class="s-goal">${SPECIAL[n].list().length} компаний</span></div>
+      <ul class="s-short">
+        ${li('Кто здесь', 'Компании с отметкой «Скоро открытие» в 2ГИС и самые свежие карточки 2ГИС с небольшим числом отзывов.')}
+        ${li('Заход', '«Увидел, что вы [недавно открылись / открываетесь <дата>] — поздравляю! Звоню, потому что первые месяцы решают, наберёте ли вы базу клиентов».')}
+        ${li('Боль', 'О новом месте никто не знает, сарафана ещё нет, отзывов мало. Люди ищут в Яндексе — и находят тех, кто работает давно и у кого есть сайт.')}
+        ${li('Предлагаем', 'Сайт к открытию: акция для первых клиентов, цены, запись, как добраться. Подключаем к 2ГИС и Яндексу с первого дня.')}
+        ${li('Срочность', 'Успеть к открытию или к первому сезону. Расчёт: сколько клиентов нужно, чтобы выйти в ноль, и сколько из них может дать сайт.')}
+      </ul></div>
+      <details class="full"><summary>Как отвечать новым компаниям на «нет»</summary><div class="s-body">
+        <div class="obj"><b>«Сначала откроемся, потом подумаем»</b><span>Как раз к открытию сайт и нужен: первые клиенты ищут вас в интернете в первую неделю. Через полгода догонять конкурентов дороже.</span></div>
+        <div class="obj"><b>«Денег сейчас нет — всё ушло на ремонт и оборудование»</b><span>Понимаю. Можно начать с одной страницы — цены, запись, адрес — и оплатить частями. Окупится с первых клиентов.</span></div>
+        <div class="obj"><b>«Нам хватит соцсетей»</b><span>Соцсеть сначала надо раскрутить, а сайт находят в Яндексе сразу по запросу «[услуга] Норильск». Для нового места это самый быстрый поток.</span></div>
+        <div class="obj"><b>«Клиенты придут по сарафану»</b><span>Сарафан работает, когда уже есть довольные клиенты. Сайт приводит первых — тех, кто запустит сарафан.</span></div>
+      </div></details>`;
+  }
   function renderScript() {
     const n = state.niche, ns = S.niches[n];
+    if (SPECIAL[n]) { $('script').innerHTML = specialPanel(n); return; }
     if (!ns) {
       $('script').innerHTML = `<div class="s-top"><div class="s-head"><h2>Сценарии звонков</h2></div>
         <p style="margin:0">Выберите нишу выше: откроется короткий план звонка, разбор отзывов и полный сценарий по стрелке. В карточке каждой компании есть «Подготовка к звонку» с её отзывами и расчётом потерь.</p></div>`;
@@ -451,7 +537,7 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     const revLine = rv ? `<p style="margin:0;color:var(--muted)">Яндекс: ${rv.n} текстовых отзывов${rv.bad ? `, из них ${rv.bad} с оценкой 1–3` : ', негатива нет'}.</p>` : '';
     const msg = fill(ns.followup, r, r.niche, false);
     return `<details class="prep"><summary>Подготовка к звонку</summary><div class="prep-body">
-      <h4>1. Представляемся</h4><p class="say">${fill(intro, r, r.niche, true)}</p>
+      <h4>1. Представляемся</h4><p class="say">${fill(intro, r, r.niche, true)}</p>${noesHtml(C.steps[0].noes, r.niche, r, false)}
       <h4>2. На главном: что компания теряет без сайта</h4>${lprHtml}
       <h4>4. Отзывы, которые подчеркнуть</h4>${revLine}${revBlock}
       <h4>7–8. Расчёт потерь и итоговая сумма</h4>${calcHtml(r.niche, shortName(r.name))}
@@ -466,12 +552,14 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     const q = state.q.trim().toLowerCase();
     const qd = q.replace(/\D/g, '');
     let r = leads.filter(x =>
-      (!state.niche || x.niche === state.niche) &&
+      inView(x, state.niche) &&
       (!state.district || x.district === state.district) &&
       (ignorePrio || !state.prio || x.p === state.prio) &&
       (!state.hideDone || !done[key(x)]) &&
       (!q || x.hay.includes(q) || (qd.length >= 4 && x.phones.replace(/\D/g, '').includes(qd))));
     const s = state.sort;
+    if (s === 'score' && state.niche === '__hot') return r.sort((a, b) => b.rs - a.rs || (b.reviews || 0) - (a.reviews || 0));
+    if (s === 'score' && state.niche === '__new') return r.sort((a, b) => (b.nw.opening ? 1 : 0) - (a.nw.opening ? 1 : 0) || b.rs - a.rs);
     r.sort(s === 'reviews' ? (a, b) => (b.reviews || 0) - (a.reviews || 0)
          : s === 'name' ? (a, b) => a.name.localeCompare(b.name, 'ru')
          : (a, b) => a.p.localeCompare(b.p) || b.score - a.score || (b.reviews || 0) - (a.reviews || 0));
@@ -489,13 +577,14 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
     const isDone = !!done[key(r)];
     return `<article class="card${isDone ? ' done' : ''}" data-i="${r.i}">
       <div class="c-main">
-        <div class="c-head"><span class="c-name">${esc(r.name)}</span><span class="pill ${r.p}">${PL[r.p]}</span></div>
+        <div class="c-head"><span class="c-name">${esc(r.name)}</span><span class="pill ${r.p}">${PL[r.p]}</span>${r.nw ? `<span class="pill new">${r.nw.opening ? 'открывается ' + fmtDate(r.nw.opening) : 'новая'}</span>` : ''}${r.hot ? '<span class="pill hotp">готовы сейчас</span>' : ''}</div>
         <div class="c-cats">${esc(r.niche)} · ${esc((r.cats || '').slice(0, 140))}</div>
         <div class="c-line"><span>${esc(r.addr || 'адрес не указан')}</span><span>${esc(r.district)}</span>${rt}</div>
         ${phones ? `<div class="phones">${phones}</div>` : ''}
         ${r.email ? `<div class="c-line"><span>${esc(r.email)}</span></div>` : ''}
         <div class="links">${maps}${soc}</div>
         ${r.why ? `<div class="why">${esc(r.why)}</div>` : ''}
+        ${SPECIAL[state.niche] && r.sig.length ? `<div class="sig"><b>Почему сейчас:</b> ${r.sig.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
         ${prep(r)}
       </div>
       <div class="c-side">
@@ -514,10 +603,10 @@ details.prep > summary { color: var(--accent); font-size: 14px; }
       b.setAttribute('aria-pressed', b.dataset.p === state.prio);
     });
     const r = state.prio ? base.filter(x => x.p === state.prio) : base;
-    $('count').textContent = `${r.length} из ${state.niche ? leads.filter(x => x.niche === state.niche).length : leads.length}`;
+    $('count').textContent = `${r.length} из ${leads.filter(x => inView(x, state.niche)).length}`;
     $('list').innerHTML = r.length
       ? r.slice(0, state.shown).map((x, k, arr) => {
-          const head = state.sort === 'score' && !state.prio && (k === 0 || arr[k - 1].p !== x.p)
+          const head = state.sort === 'score' && !state.prio && !SPECIAL[state.niche] && (k === 0 || arr[k - 1].p !== x.p)
             ? `<div class="grp ${x.p}">${GN[x.p]} — ${by[x.p]}</div>` : '';
           return head + card(x);
         }).join('') +
