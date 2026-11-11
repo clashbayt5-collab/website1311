@@ -25,6 +25,12 @@ if os.path.exists(new_path):
             r["nw"] = {"opening": v.get("opening")}
         elif not v.get("tc") and int(v["id"]) >= FRESH_ID and (v.get("reviews") or 0) <= 20 and (r.get("reviews") or 0) <= 20:
             r["nw"] = {}
+# подписи к телефонам и владелец из 2ГИС
+ct_path = os.path.join(os.path.dirname(leads_path), "contacts.json")
+if os.path.exists(ct_path):
+    for k, v in json.load(open(ct_path, encoding="utf-8")).items():
+        if v.get("ph") or v.get("legal"):
+            d["leads"][int(k)]["ct"] = v
 d["scripts"] = json.load(open(scripts_path, encoding="utf-8"))
 s = json.dumps(d, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 t = open(tpl_path, encoding="utf-8").read().replace("__DATA__", s)

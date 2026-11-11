@@ -185,6 +185,18 @@ details.noes { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 
 details.noes > summary { cursor: pointer; font-weight: 600; color: var(--hot); font-size: 14px; }
 .noes-body { display: grid; gap: 6px; padding-top: 8px; }
 
+.boss { display: grid; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.boss h4 { margin: 0; font: 600 11.5px var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.b-row { display: grid; gap: 6px; font-size: 14px; }
+.b-row.ok b { color: var(--done); }
+.b-ph { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.b-ph small { color: var(--muted); font-size: 12.5px; }
+.b-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.msg-lk { display: inline-flex; flex-direction: column; gap: 0; line-height: 1.25; padding: 5px 12px; border-color: var(--accent); }
+.msg-lk small { color: var(--muted); font-size: 11.5px; }
+details.b-msg > summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 13.5px; }
+details.b-msg[open] { display: grid; gap: 8px; }
+
 @media (max-width: 640px) {
   .s-short li { grid-template-columns: 1fr; gap: 0; }
   .react div { grid-template-columns: 1fr; gap: 2px; }
@@ -566,6 +578,52 @@ details.noes > summary { cursor: pointer; font-weight: 600; color: var(--hot); f
     return r;
   }
 
+  // ---------- как выйти на главного ----------
+  const BOSS_RE = /директор|руковод|владел|управляющ|собственник|генеральн|шеф|хозя|заведующ|приёмн|приемн/i;
+  const ADMIN_RE = /админ|ресепш|запис|регистрат|диспетч|заказ|доставк|бухгалт|касс|отдел/i;
+  const digitsOf = t => (t || '').replace(/\D/g, '').slice(-10);
+  function messengers(r) {
+    const out = [];
+    for (const [k, u] of Object.entries(r.linkmap || {})) {
+      if (/^Telegram \(номер\)/.test(k)) out.push({ k: 'Telegram', u, note: 'личный чат по номеру', w: 3 });
+      else if (k === 'Telegram') out.push({ k: 'Telegram', u, note: /\/\+|joinchat/.test(u) ? 'группа' : 'профиль или канал', w: 1 });
+      else if (k === 'MAX') out.push({ k: 'MAX', u, note: /\/join\//.test(u) ? 'канал' : 'личный чат', w: /\/join\//.test(u) ? 0 : 3 });
+      else if (k === 'WhatsApp') out.push({ k: 'WhatsApp', u, note: 'личный чат по номеру', w: 2 });
+      else if (k === 'VK') out.push({ k: 'VK', u, note: /\/(club|public)/.test(u) || !/\/id\d/.test(u) ? 'сообщения сообщества' : 'личная страница', w: 1 });
+    }
+    return out.sort((a, b) => b.w - a.w);
+  }
+  function bossBlock(r) {
+    const ph = (r.ct && r.ct.ph && r.ct.ph.length) ? r.ct.ph
+      : (r.phones || '').split(',').map(x => [x.trim(), '']).filter(x => x[0]);
+    const seen = new Set(), list = [];
+    ph.forEach(([n, lab]) => { const d = digitsOf(n); if (!d || seen.has(d)) return; seen.add(d); list.push([n.replace(/‒/g, '-'), lab || '']); });
+    const boss = list.filter(([n, lab]) => BOSS_RE.test(lab));
+    const msgs = messengers(r);
+    const tag = ([n, lab]) => lab ? `подпись в 2ГИС: «${esc(lab)}»` : (digitsOf(n).startsWith('9') ? 'мобильный — часто владелец или мастер' : 'городской — обычно администратор');
+    const phoneRow = ([n, lab]) => `<span class="phone">${esc(n)}<button type="button" data-copy="${esc(n)}">копировать</button></span><small>${tag([n, lab])}</small>`;
+    const write = fill('Здравствуйте! Это {manager}, {studio}. Подскажите, пожалуйста, как связаться с владельцем или управляющим {name}? Посмотрел вашу карточку в 2ГИС и Яндексе — есть идея, как получать больше клиентов из поиска. Хочу коротко показать руководителю, это 5 минут.', r, r.niche, false);
+    let html = '<div class="boss"><h4>Как выйти на главного</h4>';
+    if (boss.length) {
+      html += `<div class="b-row ok"><b>Номер руководителя — звоните сразу:</b>${boss.map(x => `<div class="b-ph">${phoneRow(x)}</div>`).join('')}</div>`;
+    }
+    if (r.ct && r.ct.legal) html += `<div class="b-row"><b>Владелец по 2ГИС:</b> ${esc(r.ct.legal)} — спросите его по имени.</div>`;
+    if (!boss.length) {
+      if (msgs.length) {
+        html += `<div class="b-row"><b>Номер руководителя не указан — сначала напишите:</b><div class="b-links">${msgs.map(m => `<a class="lk msg-lk" href="${esc(m.u)}" target="_blank" rel="noopener">${m.k}<small>${m.note}</small></a>`).join('')}</div></div>`;
+      } else {
+        html += `<div class="b-row"><b>Номер руководителя не указан, мессенджеров нет.</b> Позвоните и попросите имя и номер владельца — ответы в шаге 2 сценария.</div>`;
+      }
+      html += `<div class="b-row"><b>Телефоны:</b>${list.map(x => `<div class="b-ph">${phoneRow(x)}</div>`).join('')}</div>`;
+    } else if (list.length > boss.length) {
+      html += `<div class="b-row"><b>Другие телефоны:</b>${list.filter(x => !boss.includes(x)).map(x => `<div class="b-ph">${phoneRow(x)}</div>`).join('')}</div>`;
+      if (msgs.length) html += `<div class="b-row"><b>Мессенджеры:</b><div class="b-links">${msgs.map(m => `<a class="lk msg-lk" href="${esc(m.u)}" target="_blank" rel="noopener">${m.k}<small>${m.note}</small></a>`).join('')}</div></div>`;
+    }
+    if (r.linkya) html += `<div class="b-row"><b>Яндекс.Карты:</b> <a href="${esc(r.linkya)}" target="_blank" rel="noopener">карточка компании</a></div>`;
+    if (!boss.length) html += `<details class="b-msg"><summary>Текст первого сообщения</summary><p class="msg">${esc(write)}</p><button type="button" class="copybtn" data-copy="${esc(write)}">Копировать сообщение</button></details>`;
+    return html + '</div>';
+  }
+
   function card(r) {
     const phones = (r.phones || '').split(',').map(s => s.trim()).filter(Boolean)
       .map(p => `<span class="phone">${esc(p)}<button type="button" data-copy="${esc(p)}">копировать</button></span>`).join('');
@@ -580,9 +638,9 @@ details.noes > summary { cursor: pointer; font-weight: 600; color: var(--hot); f
         <div class="c-head"><span class="c-name">${esc(r.name)}</span><span class="pill ${r.p}">${PL[r.p]}</span>${r.nw ? `<span class="pill new">${r.nw.opening ? 'открывается ' + fmtDate(r.nw.opening) : 'новая'}</span>` : ''}${r.hot ? '<span class="pill hotp">готовы сейчас</span>' : ''}</div>
         <div class="c-cats">${esc(r.niche)} · ${esc((r.cats || '').slice(0, 140))}</div>
         <div class="c-line"><span>${esc(r.addr || 'адрес не указан')}</span><span>${esc(r.district)}</span>${rt}</div>
-        ${phones ? `<div class="phones">${phones}</div>` : ''}
         ${r.email ? `<div class="c-line"><span>${esc(r.email)}</span></div>` : ''}
         <div class="links">${maps}${soc}</div>
+        ${bossBlock(r)}
         ${r.why ? `<div class="why">${esc(r.why)}</div>` : ''}
         ${SPECIAL[state.niche] && r.sig.length ? `<div class="sig"><b>Почему сейчас:</b> ${r.sig.map(x => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
         ${prep(r)}
