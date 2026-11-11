@@ -649,12 +649,14 @@ details.b-msg[open] { display: grid; gap: 8px; }
   function messengers(r, mobiles) {
     const out = [], lm = r.linkmap || {};
     if (lm['Telegram (номер)']) out.push({ k: 'Telegram', u: lm['Telegram (номер)'], note: 'личный чат — номер указан в карточке', w: 5 });
-    if (lm.MAX && /\/u\//.test(lm.MAX)) out.push({ k: 'MAX', u: lm.MAX, note: 'личный чат — указан в карточке', w: 5 });
+    // MAX открываем в веб-версии (web.max.ru) — работает на iPhone в Safari без приложения
+    const maxWeb = u => u.replace(/^https?:\/\/(www\.)?max\.ru\//, 'https://web.max.ru/');
+    if (lm.MAX && /\/u\//.test(lm.MAX)) out.push({ k: 'MAX', u: maxWeb(lm.MAX), note: 'личный чат — откроется веб-версия MAX', w: 5 });
     if (lm.WhatsApp) out.push({ k: 'WhatsApp', u: lm.WhatsApp, note: 'личный чат по номеру', w: 3 });
     // мобильные номера без указанного Telegram — пробуем чат по номеру
     if (!lm['Telegram (номер)']) mobiles.forEach(d => out.push({ k: 'Telegram', u: 'https://t.me/+7' + d, note: `по номеру +7${d} — если он есть в Telegram`, w: 2 }));
     if (lm.Telegram) out.push({ k: 'Telegram', u: lm.Telegram, note: 'ссылка из карточки — чаще канал', w: 0 });
-    if (lm.MAX && !/\/u\//.test(lm.MAX)) out.push({ k: 'MAX', u: lm.MAX, note: 'канал компании', w: 0 });
+    if (lm.MAX && !/\/u\//.test(lm.MAX)) out.push({ k: 'MAX', u: maxWeb(lm.MAX), note: 'канал компании (веб-версия)', w: 0 });
     if (lm.VK) out.push({ k: 'VK', u: lm.VK, note: 'сообщения сообщества', w: 1 });
     return out.sort((x, y) => y.w - x.w);
   }
@@ -785,7 +787,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const isMax = /max\.ru/.test(a.href);
     try {
       navigator.clipboard.writeText(a.dataset.msg).then(
-        () => toast(isMax ? 'Сообщение скопировано — вставьте его в чат MAX' : 'Сообщение вставлено в чат и скопировано на всякий случай'),
+        () => toast(isMax ? 'Текст скопирован. В MAX нажмите на поле сообщения → «Вставить» → отправьте' : 'Сообщение вставлено в чат и скопировано на всякий случай'),
         () => toast(isMax ? 'Скопируйте текст сообщения ниже и вставьте в чат' : 'Текст сообщения подставлен в чат'));
     } catch (err) { toast('Текст сообщения — в блоке ниже'); }
   });
