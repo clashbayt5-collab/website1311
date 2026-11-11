@@ -1,4 +1,5 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Норильск без сайта</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -192,7 +193,7 @@ details.noes > summary { cursor: pointer; font-weight: 600; color: var(--hot); f
 .b-ph { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
 .b-ph small { color: var(--muted); font-size: 12.5px; }
 .b-links { display: flex; flex-wrap: wrap; gap: 6px; }
-.msg-lk { display: inline-flex; flex-direction: column; gap: 0; line-height: 1.25; padding: 5px 12px; border-color: var(--accent); }
+.msg-lk { white-space: normal; text-align: left; display: inline-flex; flex-direction: column; gap: 0; line-height: 1.25; padding: 5px 12px; border-color: var(--accent); }
 .msg-lk small { color: var(--muted); font-size: 11.5px; }
 .msg-lk.best { background: var(--accent-soft); font-weight: 600; }
 .msg-lk.weak { border-color: var(--line); opacity: .75; }
@@ -200,7 +201,53 @@ details.noes > summary { cursor: pointer; font-weight: 600; color: var(--hot); f
 details.b-msg > summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 13.5px; }
 details.b-msg[open] { display: grid; gap: 8px; }
 
+.ftoggle { display: none; }
+.fx { display: contents; }
+.tel { color: inherit; text-decoration: none; }
+.totop { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 20px var(--f-body); box-shadow: 0 4px 14px rgb(0 0 0 / .25); cursor: pointer; }
+
 @media (max-width: 640px) {
+  body { font-size: 15px; }
+  input, select, textarea { font-size: 16px !important; }
+  header.top { padding-block: 18px 12px; gap: 10px; }
+  h1 { font-size: 26px; }
+  .stats { gap: 4px 14px; font-size: 13px; }
+  .me { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .me span { grid-column: 1 / -1; order: -2; }
+  .me input { width: 100%; }
+  .me #meStudio { grid-column: 1 / -1; order: -1; }
+  .niches { display: flex; overflow-x: auto; gap: 6px; padding-block: 4px 12px; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); scroll-snap-type: x proximity; scrollbar-width: none; }
+  .niches::-webkit-scrollbar { display: none; }
+  .niche { flex: 0 0 auto; min-width: 128px; max-width: 170px; padding: 8px 10px; scroll-snap-align: start; gap: 3px; }
+  .n-name { font-size: 13.5px; }
+  .n-meta { font-size: 11px; gap: 6px; }
+  .bar { padding-block: 8px; }
+  .bar .row { flex-wrap: wrap; }
+  .bar input[type=search] { flex: 1 1 0; }
+  .ftoggle { display: inline-block; flex: 0 0 auto; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-weight: 600; cursor: pointer; }
+  .bar.open .ftoggle { background: var(--ink); color: var(--bg); }
+  .fx { display: none; }
+  .bar.open .fx { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; max-height: 60vh; overflow-y: auto; }
+  .bar.open .fx select { flex: 1 1 140px; }
+  .seg { width: 100%; }
+  .seg { flex-wrap: nowrap; }
+  .seg button { flex: 1 1 0; padding: 9px 2px; font-size: 12.5px; }
+  .bar.open .fx select { flex: 1 1 0; min-width: 0; }
+  .chip { padding: 9px 12px; }
+  .count { margin-left: 0; }
+  .card { grid-template-columns: minmax(0, 1fr); padding: 12px; gap: 6px; }
+  .c-name { font-size: 16px; }
+  .phone { padding: 4px 4px 4px 10px; font-size: 14px; }
+  .phone button { padding: 6px 10px; }
+  .lk { padding: 7px 12px; }
+  .boss { padding: 10px; }
+  .b-ph { gap: 2px 8px; }
+  .script { margin-block: 12px 4px; }
+  .s-top, .s-rev, details.full > summary { padding-inline: 14px; }
+  .s-body { padding-inline: 14px; }
+  .calc-in { grid-template-columns: 1fr 1fr; }
+  .calc-in label:last-child { grid-column: 1 / -1; }
+  .copybtn { padding: 9px 14px; }
   .s-short li { grid-template-columns: 1fr; gap: 0; }
   .react div { grid-template-columns: 1fr; gap: 2px; }
   .card { grid-template-columns: 1fr; }
@@ -229,6 +276,8 @@ details.b-msg[open] { display: grid; gap: 8px; }
 <div class="bar">
   <div class="wrap row">
     <input type="search" id="q" placeholder="Поиск: название, улица, телефон, услуга" aria-label="Поиск">
+    <button type="button" class="ftoggle" id="fToggle" aria-expanded="false">Фильтры</button>
+    <div class="fx" id="fx">
     <select id="district" aria-label="Район">
       <option value="">Все районы</option>
       <option>Норильск (центр)</option><option>Талнах</option><option>Кайеркан</option>
@@ -247,8 +296,10 @@ details.b-msg[open] { display: grid; gap: 8px; }
     <button class="chip" id="onlyChat" aria-pressed="false">Можно написать в TG/MAX</button>
     <button class="chip" id="hideDone" aria-pressed="false">Скрыть отмеченные</button>
     <span class="count" id="count"></span>
+    </div>
   </div>
 </div>
+<button type="button" class="totop" id="toTop" aria-label="Наверх" hidden>↑</button>
 
 <main class="wrap">
   <section class="script" id="script"></section>
@@ -308,7 +359,11 @@ details.b-msg[open] { display: grid; gap: 8px; }
     location.hash = n ? SLUG[n] : '';
     if (!n) setNiche('');
   });
-  function setNiche(n) { state.niche = n; state.shown = PAGE; renderNiches(); renderScript(); render(); }
+  function setNiche(n) {
+    state.niche = n; state.shown = PAGE; renderNiches(); renderScript(); render();
+    const act = document.querySelector('.niche[aria-pressed="true"]');
+    if (act && window.innerWidth <= 640) act.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
 
   // ---------- сценарии звонков ----------
   const S = D.scripts, C = S.common;
@@ -611,7 +666,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const msgs = messengers(r, mobiles);
     const chatBtn = m => `<a class="lk msg-lk${m.w >= 5 ? ' best' : m.w === 0 ? ' weak' : ''}" href="${esc(m.u)}" target="_blank" rel="noopener">${m.k}<small>${esc(m.note)}</small></a>`;
     const tag = ([n, lab]) => lab ? `подпись в 2ГИС: «${esc(lab)}»` : (digitsOf(n).startsWith('9') ? 'мобильный — часто владелец или мастер' : 'городской — обычно администратор');
-    const phoneRow = ([n, lab]) => `<span class="phone">${esc(n)}<button type="button" data-copy="${esc(n)}">копировать</button></span><small>${tag([n, lab])}</small>`;
+    const phoneRow = ([n, lab]) => `<span class="phone"><a class="tel" href="tel:+7${digitsOf(n)}">${esc(n)}</a><button type="button" data-copy="${esc(n)}">копировать</button></span><small>${tag([n, lab])}</small>`;
     const write = fill('Здравствуйте! Это {manager}, {studio}. Подскажите, пожалуйста, как связаться с владельцем или управляющим {name}? Посмотрел вашу карточку в 2ГИС и Яндексе — есть идея, как получать больше клиентов из поиска. Хочу коротко показать руководителю, это 5 минут.', r, r.niche, false);
     let html = '<div class="boss"><h4>Как выйти на главного</h4>';
     if (boss.length) {
@@ -709,6 +764,19 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const b = e.target.closest('button'); if (!b) return;
     state.prio = b.dataset.p; state.shown = PAGE; render();
   });
+  $('fToggle').addEventListener('click', () => {
+    const open = !document.querySelector('.bar').classList.contains('open');
+    document.querySelector('.bar').classList.toggle('open', open);
+    $('fToggle').setAttribute('aria-expanded', open);
+  });
+  const updToggle = () => {
+    const n = [state.district, state.prio, state.chat, state.hideDone, state.sort !== 'score'].filter(Boolean).length;
+    $('fToggle').textContent = n ? `Фильтры · ${n}` : 'Фильтры';
+  };
+  document.querySelector('.bar').addEventListener('click', () => setTimeout(updToggle));
+  document.querySelector('.bar').addEventListener('change', () => setTimeout(updToggle));
+  window.addEventListener('scroll', () => { $('toTop').hidden = window.scrollY < 900; }, { passive: true });
+  $('toTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   $('onlyChat').addEventListener('click', e => {
     state.chat = !state.chat; e.currentTarget.setAttribute('aria-pressed', state.chat); state.shown = PAGE; render();
   });
