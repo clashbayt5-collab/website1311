@@ -202,6 +202,8 @@ details.b-msg > summary { cursor: pointer; color: var(--accent); font-weight: 60
 details.b-msg[open] { display: grid; gap: 8px; }
 
 .ftoggle { display: none; }
+[hidden] { display: none !important; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20; max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / .3); text-align: center; }
 .fx { display: contents; }
 .tel { color: inherit; text-decoration: none; }
 .totop { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 6; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 700 20px var(--f-body); box-shadow: 0 4px 14px rgb(0 0 0 / .25); cursor: pointer; }
@@ -656,6 +658,21 @@ details.b-msg[open] { display: grid; gap: 8px; }
     if (lm.VK) out.push({ k: 'VK', u: lm.VK, note: 'сообщения сообщества', w: 1 });
     return out.sort((x, y) => y.w - x.w);
   }
+  function firstMsg(r) {
+    const src = r.srcs || '';
+    const where = /2ГИС/.test(src) && /Яндекс/.test(src) ? '2ГИС и Яндекс.Картах' : /Яндекс/.test(src) ? 'Яндекс.Картах' : '2ГИС';
+    return `Здравствуйте! Меня зовут ${me.name || 'Петр'}, компания ${me.studio || 'Юнит'}, мы делаем сайты для бизнесов в Норильске. ` +
+      `Я пишу по поводу ${shortName(r.name)}: посмотрел вашу карточку в ${where} и заметил пару моментов, на которых вы теряете клиентов. ` +
+      `Можете, пожалуйста, прописать номер руководителя компании, если вы таковым не являетесь? ` +
+      `Можем созвониться в удобное для вас время и обсудить сайт для вас.`;
+  }
+  // ссылка на чат с уже вставленным текстом (Telegram, WhatsApp); MAX текст не принимает — его копируем
+  function withText(m, txt) {
+    const t = encodeURIComponent(txt);
+    if (m.k === 'WhatsApp') return m.u.split('?')[0] + '?text=' + t;
+    if (m.k === 'Telegram' && /t\.me\//.test(m.u)) return m.u + (m.u.includes('?') ? '&' : '?') + 'text=' + t;
+    return m.u;
+  }
   function bossBlock(r) {
     const ph = (r.ct && r.ct.ph && r.ct.ph.length) ? r.ct.ph
       : (r.phones || '').split(',').map(x => [x.trim(), '']).filter(x => x[0]);
@@ -664,10 +681,11 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const boss = list.filter(([n, lab]) => BOSS_RE.test(lab));
     const mobiles = list.map(([n]) => digitsOf(n)).filter(d => d.startsWith('9')).slice(0, 2);
     const msgs = messengers(r, mobiles);
-    const chatBtn = m => `<a class="lk msg-lk${m.w >= 5 ? ' best' : m.w === 0 ? ' weak' : ''}" href="${esc(m.u)}" target="_blank" rel="noopener">${m.k}<small>${esc(m.note)}</small></a>`;
+    const first = firstMsg(r);
+    const chatBtn = m => `<a class="lk msg-lk${m.w >= 5 ? ' best' : m.w === 0 ? ' weak' : ''}" href="${esc(withText(m, first))}" data-msg="${esc(first)}" target="_blank" rel="noopener">${m.k}<small>${esc(m.note)}</small></a>`;
     const tag = ([n, lab]) => lab ? `подпись в 2ГИС: «${esc(lab)}»` : (digitsOf(n).startsWith('9') ? 'мобильный — часто владелец или мастер' : 'городской — обычно администратор');
     const phoneRow = ([n, lab]) => `<span class="phone"><a class="tel" href="tel:+7${digitsOf(n)}">${esc(n)}</a><button type="button" data-copy="${esc(n)}">копировать</button></span><small>${tag([n, lab])}</small>`;
-    const write = fill('Здравствуйте! Это {manager}, {studio}. Подскажите, пожалуйста, как связаться с владельцем или управляющим {name}? Посмотрел вашу карточку в 2ГИС и Яндексе — есть идея, как получать больше клиентов из поиска. Хочу коротко показать руководителю, это 5 минут.', r, r.niche, false);
+    const write = first;
     let html = '<div class="boss"><h4>Как выйти на главного</h4>';
     if (boss.length) {
       html += `<div class="b-row ok"><b>Номер руководителя — звоните сразу:</b>${boss.map(x => `<div class="b-ph">${phoneRow(x)}</div>`).join('')}</div>`;
@@ -685,7 +703,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
       if (msgs.length) html += `<div class="b-row"><b>Мессенджеры:</b><div class="b-links">${msgs.map(chatBtn).join('')}</div></div>`;
     }
     if (r.linkya) html += `<div class="b-row"><b>Яндекс.Карты:</b> <a href="${esc(r.linkya)}" target="_blank" rel="noopener">карточка компании</a></div>`;
-    if (!boss.length) html += `<details class="b-msg"><summary>Текст первого сообщения</summary><p class="msg">${esc(write)}</p><button type="button" class="copybtn" data-copy="${esc(write)}">Копировать сообщение</button></details>`;
+    if (!boss.length) html += `<details class="b-msg"><summary>Текст сообщения (вставляется при переходе в чат)</summary><p class="msg">${esc(write)}</p><button type="button" class="copybtn" data-copy="${esc(write)}">Копировать сообщение</button></details>`;
     return html + '</div>';
   }
 
@@ -737,6 +755,20 @@ details.b-msg[open] { display: grid; gap: 8px; }
       : '<div class="empty">Ничего не найдено. Сбросьте фильтры или выберите другую нишу.</div>';
   }
 
+  const toast = t => {
+    let el = document.getElementById('toast');
+    if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; document.body.appendChild(el); }
+    el.textContent = t; el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 3500);
+  };
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a.msg-lk[data-msg]'); if (!a) return;
+    const isMax = /max\.ru/.test(a.href);
+    try {
+      navigator.clipboard.writeText(a.dataset.msg).then(
+        () => toast(isMax ? 'Сообщение скопировано — вставьте его в чат MAX' : 'Сообщение вставлено в чат и скопировано на всякий случай'),
+        () => toast(isMax ? 'Скопируйте текст сообщения ниже и вставьте в чат' : 'Текст сообщения подставлен в чат'));
+    } catch (err) { toast('Текст сообщения — в блоке ниже'); }
+  });
   $('list').addEventListener('click', e => {
     const c = e.target.closest('[data-copy]');
     if (c) {
