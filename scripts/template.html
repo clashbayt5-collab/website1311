@@ -203,6 +203,8 @@ details.b-msg[open] { display: grid; gap: 8px; }
 
 .ftoggle { display: none; }
 [hidden] { display: none !important; }
+.mock { display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.mock input { padding: 7px 10px; border: 1px dashed var(--accent); border-radius: 7px; background: var(--surface); font-size: 14px; min-width: 0; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); z-index: 20; max-width: min(92vw, 420px); padding: 10px 16px; border-radius: 10px; background: var(--ink); color: var(--bg); font-size: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / .3); text-align: center; }
 .fx { display: contents; }
 .tel { color: inherit; text-decoration: none; }
@@ -677,6 +679,8 @@ details.b-msg[open] { display: grid; gap: 8px; }
     if (soc.length) return `а своего сайта нет: вы ведёте ${soc.slice(0, 2).join(' и ')}, но в поиске Яндекса соцсети почти не видно. ${leave}`;
     return `а своего сайта нет — в интернете о вас только карточка на картах, без цен и записи. ${leave}`;
   }
+  const MOCK_PH = '[ссылка на макет]';
+  const mockOf = r => { try { return localStorage.getItem('mock:' + key(r)) || ''; } catch (e) { return ''; } };
   function firstMsg(r) {
     const src = r.srcs || '';
     const where = /2ГИС/.test(src) && /Яндекс/.test(src) ? '2ГИС и Яндекс.Картах' : /Яндекс/.test(src) ? 'Яндекс.Картах' : '2ГИС';
@@ -684,8 +688,8 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const facts = n ? `${n} ${plural(n, 'отзыв', 'отзыва', 'отзывов')}${r.rating ? ` и рейтинг ${Number(r.rating).toFixed(1).replace('.', ',')}` : ''}, ` : '';
     return `Здравствуйте! Меня зовут ${me.name || 'Петр'}, я из компании «${me.studio || 'Юнит'}» — мы создаём сайты для бизнеса в Норильске.\n\n` +
       `Посмотрел карточку ${shortName(r.name)} в ${where}: ${facts}${msgIssue(r)}\n\n` +
-      `Я подготовил короткий бесплатный разбор: что можно поправить и сколько клиентов это может дать. ` +
-      `Можем созвониться на 5 минут, чтобы обсудить примерные детали сайта и обо всём договориться по телефону. Когда вам удобно?\n\n` +
+      `Я уже сделал для вас бесплатный пробный макет сайта — посмотрите, как он может выглядеть:\n${mockOf(r) || MOCK_PH}\n\n` +
+      `Если понравится, созвонимся на 5 минут: обсудим детали и обо всём договоримся по телефону. Когда вам удобно?\n\n` +
       `Если этими вопросами занимаетесь не вы, перешлите, пожалуйста, это сообщение руководителю или пришлите его номер — я сам ему напишу.`;
   }
   // ссылка на чат с уже вставленным текстом (Telegram, WhatsApp); MAX текст не принимает — его копируем
@@ -704,11 +708,12 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const mobiles = list.map(([n]) => digitsOf(n)).filter(d => d.startsWith('9')).slice(0, 2);
     const msgs = messengers(r, mobiles);
     const first = firstMsg(r);
-    const chatBtn = m => `<a class="lk msg-lk${m.w >= 5 ? ' best' : m.w === 0 ? ' weak' : ''}" href="${esc(withText(m, first))}" data-msg="${esc(first)}" target="_blank" rel="noopener">${m.k}<small>${esc(m.note)}</small></a>`;
+    const chatBtn = m => `<a class="lk msg-lk${m.w >= 5 ? ' best' : m.w === 0 ? ' weak' : ''}" href="${esc(withText(m, first))}" data-msg="${esc(first)}" data-k="${m.k}" data-u="${esc(m.u)}" target="_blank" rel="noopener">${m.k}<small>${esc(m.note)}</small></a>`;
     const tag = ([n, lab]) => lab ? `подпись в 2ГИС: «${esc(lab)}»` : (digitsOf(n).startsWith('9') ? 'мобильный — часто владелец или мастер' : 'городской — обычно администратор');
     const phoneRow = ([n, lab]) => `<span class="phone"><a class="tel" href="tel:+7${digitsOf(n)}">${esc(n)}</a><button type="button" data-copy="${esc(n)}">копировать</button></span><small>${tag([n, lab])}</small>`;
     const write = first;
-    let html = '<div class="boss"><h4>Как выйти на главного</h4>';
+    let html = '<div class="boss"><h4>Как выйти на главного</h4>' +
+      `<label class="mock">Ссылка на макет сайта для этой компании<input type="url" class="mock-in" id="mock-${r.i}" data-i="${r.i}" value="${esc(mockOf(r))}" placeholder="вставьте ссылку — она попадёт в сообщение" autocomplete="off"></label>`;
     if (boss.length) {
       html += `<div class="b-row ok"><b>Номер руководителя — звоните сразу:</b>${boss.map(x => `<div class="b-ph">${phoneRow(x)}</div>`).join('')}</div>`;
     }
@@ -725,7 +730,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
       if (msgs.length) html += `<div class="b-row"><b>Мессенджеры:</b><div class="b-links">${msgs.map(chatBtn).join('')}</div></div>`;
     }
     if (r.linkya) html += `<div class="b-row"><b>Яндекс.Карты:</b> <a href="${esc(r.linkya)}" target="_blank" rel="noopener">карточка компании</a></div>`;
-    if (!boss.length) html += `<details class="b-msg"><summary>Текст сообщения (вставляется при переходе в чат)</summary><p class="msg">${esc(write)}</p><button type="button" class="copybtn" data-copy="${esc(write)}">Копировать сообщение</button></details>`;
+    html += `<details class="b-msg"><summary>Текст сообщения (вставляется при переходе в чат)</summary><p class="msg">${esc(write)}</p><button type="button" class="copybtn" data-copy="${esc(write)}">Копировать сообщение</button></details>`;
     return html + '</div>';
   }
 
@@ -782,9 +787,20 @@ details.b-msg[open] { display: grid; gap: 8px; }
     if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; document.body.appendChild(el); }
     el.textContent = t; el.hidden = false; clearTimeout(el._t); el._t = setTimeout(() => { el.hidden = true; }, 3500);
   };
+  document.addEventListener('input', e => {
+    const inp = e.target.closest('.mock-in'); if (!inp) return;
+    const r = leads[+inp.dataset.i], v = inp.value.trim();
+    try { v ? localStorage.setItem('mock:' + key(r), v) : localStorage.removeItem('mock:' + key(r)); } catch (err) {}
+    const msg = firstMsg(r), box = inp.closest('.boss');
+    box.querySelectorAll('a.msg-lk').forEach(a => { a.dataset.msg = msg; a.href = withText({ k: a.dataset.k, u: a.dataset.u }, msg); });
+    const pm = box.querySelector('.b-msg .msg'); if (pm) pm.textContent = msg;
+    const cb = box.querySelector('.b-msg .copybtn'); if (cb) cb.dataset.copy = msg;
+  });
   document.addEventListener('click', e => {
     const a = e.target.closest('a.msg-lk[data-msg]'); if (!a) return;
+    if (a.dataset.msg.includes(MOCK_PH)) { toast('Не забудьте заменить [ссылка на макет] на ссылку — или вставьте её в поле в карточке'); }
     const isMax = /max\.ru/.test(a.href);
+    if (a.dataset.msg.includes(MOCK_PH)) return navigator.clipboard && navigator.clipboard.writeText(a.dataset.msg).catch(() => {});
     try {
       navigator.clipboard.writeText(a.dataset.msg).then(
         () => toast(isMax ? 'Текст скопирован. В MAX нажмите на поле сообщения → «Вставить» → отправьте' : 'Сообщение вставлено в чат и скопировано на всякий случай'),
