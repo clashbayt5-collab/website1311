@@ -655,8 +655,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const maxWeb = u => u.replace(/^https?:\/\/(www\.)?max\.ru\//, 'https://web.max.ru/');
     if (lm.MAX && /\/u\//.test(lm.MAX)) out.push({ k: 'MAX', u: maxWeb(lm.MAX), note: 'личный чат — откроется веб-версия MAX', w: 5 });
     if (lm.WhatsApp) out.push({ k: 'WhatsApp', u: lm.WhatsApp, note: 'личный чат по номеру', w: 3 });
-    // мобильные номера без указанного Telegram — пробуем чат по номеру
-    if (!lm['Telegram (номер)']) mobiles.forEach(d => out.push({ k: 'Telegram', u: 'https://t.me/+7' + d, note: `по номеру +7${d} — если он есть в Telegram`, w: 2 }));
+    // Telegram по номеру — только если компания сама указала его в карточке (непроверенные номера не предлагаем)
     if (lm.Telegram) out.push({ k: 'Telegram', u: lm.Telegram, note: 'ссылка из карточки — чаще канал', w: 0 });
     if (lm.MAX && !/\/u\//.test(lm.MAX)) out.push({ k: 'MAX', u: maxWeb(lm.MAX), note: 'канал компании (веб-версия)', w: 0 });
     if (lm.VK) out.push({ k: 'VK', u: lm.VK, note: 'сообщения сообщества', w: 1 });
