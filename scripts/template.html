@@ -220,6 +220,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
   .me span { grid-column: 1 / -1; order: -2; }
   .me input { width: 100%; }
   .me #meStudio { grid-column: 1 / -1; order: -1; }
+  .me #mePortfolio { grid-column: 1 / -1; }
   .niches { display: flex; overflow-x: auto; gap: 6px; padding-block: 4px 12px; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); scroll-snap-type: x proximity; scrollbar-width: none; }
   .niches::-webkit-scrollbar { display: none; }
   .niche { flex: 0 0 auto; min-width: 128px; max-width: 170px; padding: 8px 10px; scroll-snap-align: start; gap: 3px; }
@@ -272,6 +273,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
       <input id="meName" placeholder="Ваше имя" aria-label="Ваше имя">
       <input id="meStudio" placeholder="Название вашей студии" aria-label="Название студии">
       <input id="mePrice" type="number" min="0" placeholder="Цена сайта, ₽" aria-label="Цена сайта">
+      <input id="mePortfolio" type="url" placeholder="Ссылка на ваше портфолио" aria-label="Ссылка на портфолио" autocomplete="off">
     </div>
   </header>
   <nav class="niches" id="niches" aria-label="Ниши"></nav>
@@ -411,8 +413,8 @@ details.b-msg[open] { display: grid; gap: 8px; }
     __new: { name: 'Новые компании', list: () => leads.filter(r => r.nw) }
   };
   const inView = (x, n) => !n || (n === '__hot' ? x.hot : n === '__new' ? !!x.nw : x.niche === n);
-  const me = { name: '', studio: '', price: '' };
-  const ME = { meName: 'name', meStudio: 'studio', mePrice: 'price' };
+  const me = { name: '', studio: '', price: '', portfolio: '' };
+  const ME = { meName: 'name', meStudio: 'studio', mePrice: 'price', mePortfolio: 'portfolio' };
   try { for (const id in ME) me[ME[id]] = localStorage.getItem(id) || ''; } catch (e) {}
   for (const id in ME) $(id).value = me[ME[id]];
   Object.keys(ME).forEach(id => $(id).addEventListener('input', e => {
@@ -678,7 +680,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
     if (soc.length) return `а своего сайта нет: вы ведёте ${soc.slice(0, 2).join(' и ')}, но в поиске Яндекса соцсети почти не видно. ${leave}`;
     return `а своего сайта нет — в интернете о вас только карточка на картах, без цен и записи. ${leave}`;
   }
-  const MOCK_PH = '[ссылка на макет]';
+  const MOCK_PH = '[ссылка на портфолио]';
   const mockOf = r => { try { return localStorage.getItem('mock:' + key(r)) || ''; } catch (e) { return ''; } };
   function firstMsg(r) {
     const src = r.srcs || '';
@@ -690,8 +692,9 @@ details.b-msg[open] { display: grid; gap: 8px; }
     return `Здравствуйте! Меня зовут ${me.name || 'Петр'}, я из компании «${me.studio || 'Юнит'}», мы делаем сайты для бизнеса в Норильске.\n\n` +
       `Хочу предложить сайт для «${shortName(r.name)}». ${problem}\n\n` +
       `На сайте будет:\n${feats.map(f => '• ' + f).join('\n')}\nИ добавим всё, что захотите сами.\n\n` +
-      `Я уже сделал для вас бесплатный пробный макет, посмотрите:\n${mockOf(r) || MOCK_PH}\n\n` +
-      `Если понравится, давайте созвонимся на 5 минут и обо всём договоримся. Когда вам удобно?\n\n` +
+      `Посмотрите мои работы, это мой сайт с портфолио:\n${me.portfolio || MOCK_PH}\n\n` +
+      `Если понравится, давайте созвонимся на 5 минут и обо всём договоримся. Когда вам удобно? ` +
+      `После звонка могу бесплатно сделать пробный макет сайта с данными вашей компании.\n\n` +
       `Если сайтом занимаетесь не вы, перешлите, пожалуйста, это сообщение руководителю или пришлите его номер, я сам ему напишу.`;
   }
   // ссылка на чат с уже вставленным текстом (Telegram, WhatsApp); MAX текст не принимает — его копируем
@@ -714,8 +717,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
     const tag = ([n, lab]) => lab ? `подпись в 2ГИС: «${esc(lab)}»` : (digitsOf(n).startsWith('9') ? 'мобильный — часто владелец или мастер' : 'городской — обычно администратор');
     const phoneRow = ([n, lab]) => `<span class="phone"><a class="tel" href="tel:+7${digitsOf(n)}">${esc(n)}</a><button type="button" data-copy="${esc(n)}">копировать</button></span><small>${tag([n, lab])}</small>`;
     const write = first;
-    let html = '<div class="boss"><h4>Как выйти на главного</h4>' +
-      `<label class="mock">Ссылка на макет сайта для этой компании<input type="url" class="mock-in" id="mock-${r.i}" data-i="${r.i}" value="${esc(mockOf(r))}" placeholder="вставьте ссылку — она попадёт в сообщение" autocomplete="off"></label>`;
+    let html = '<div class="boss"><h4>Как выйти на главного</h4>';
     if (boss.length) {
       html += `<div class="b-row ok"><b>Номер руководителя — звоните сразу:</b>${boss.map(x => `<div class="b-ph">${phoneRow(x)}</div>`).join('')}</div>`;
     }
@@ -800,7 +802,7 @@ details.b-msg[open] { display: grid; gap: 8px; }
   });
   document.addEventListener('click', e => {
     const a = e.target.closest('a.msg-lk[data-msg]'); if (!a) return;
-    if (a.dataset.msg.includes(MOCK_PH)) { toast('Не забудьте заменить [ссылка на макет] на ссылку — или вставьте её в поле в карточке'); }
+    if (a.dataset.msg.includes(MOCK_PH)) { toast('Вставьте ссылку на портфолио в поле вверху страницы — или замените [ссылка на портфолио] в чате'); }
     const isMax = /max\.ru/.test(a.href);
     if (a.dataset.msg.includes(MOCK_PH)) return navigator.clipboard && navigator.clipboard.writeText(a.dataset.msg).catch(() => {});
     try {
